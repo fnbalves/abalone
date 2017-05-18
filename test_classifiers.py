@@ -35,4 +35,4 @@ for (i, o) in enumerate(all_outputs):
 plt.xlabel('idade')
 plt.ylabel('frequencia amostral')
 plt.hist(Y)
-plt.show()
+plt.savefig('result_images/hist_ages.png')
