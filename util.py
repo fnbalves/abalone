@@ -57,8 +57,12 @@ def separate_X_Y(np_data):
     Y = Y.ravel()
     return [X, Y]
 
-def hold_out(X, Y):
-    all_data = [[x, Y[i]] for (i, x) in enumerate(X)]
+def pre_process_and_hold_out(X, Y):
+    n_X = create_dummy_vars(X, 0)
+    [mins, maxes] = get_max_and_mins(n_X)
+    n_X_scaled = scale_vars(n_X, mins, maxes)
+    
+    all_data = [[x, Y[i]] for (i, x) in enumerate(n_X_scaled)]
     random.shuffle(all_data)
     len_data_set = len(all_data)
     train_set_size = 2*len_data_set/3
