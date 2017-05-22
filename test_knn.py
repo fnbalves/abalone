@@ -8,11 +8,12 @@ print 'Separate X and Y'
 [X, Y] = separate_X_Y(np_data)
 print 'Getting set of outputs'
 
-[X_train, Y_train, X_test, Y_test] = hold_out(X, Y)
+[X_train, Y_train, X_test, Y_test] = pre_process_and_hold_out(X, Y)
 
 accuracies = []
 
-for K in xrange(10):
+for i in xrange(10):
+    K = 2*i + 1
     knn_classifier = KNeighborsClassifier(n_neighbors=K)
     knn_classifier.fit(X_train, Y_train)
     new_accuracy = knn_classifier.score(X_test, Y_test)
