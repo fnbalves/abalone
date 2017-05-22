@@ -61,7 +61,7 @@ def pre_process_and_hold_out(X, Y):
     n_X = create_dummy_vars(X, 0)
     [mins, maxes] = get_max_and_mins(n_X)
     n_X_scaled = scale_vars(n_X, mins, maxes)
-    
+
     all_data = [[x, Y[i]] for (i, x) in enumerate(n_X_scaled)]
     random.shuffle(all_data)
     len_data_set = len(all_data)
@@ -72,6 +72,6 @@ def pre_process_and_hold_out(X, Y):
     X_train = [x for [x,y] in train]
     Y_train = [y for [x,y] in train]
     X_test = [x for [x,y] in test]
-    Y_test = [x for [x,y] in test]
+    Y_test = [y for [x,y] in test]
 
     return [X_train, Y_train, X_test, Y_test]
