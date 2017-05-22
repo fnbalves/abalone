@@ -1,6 +1,16 @@
 import matplotlib.pyplot as plt
 from util import *
 
+def test_correlations(X, Y):
+    (num_elems, dimensions) = np.shape(X)
+    correlations = []
+    for i in xrange(dimensions):
+        Xd = X[np.ix_(range(num_elems), [i])].ravel()
+        new_correlation = np.correlate(Xd, Y)
+        correlations.append(new_correlation)
+        print 'correlation', i, new_correlation
+    return correlations
+
 print 'Reading files'
 np_data = read_file()
 print 'Separate X and Y'
@@ -21,3 +31,9 @@ plt.xlabel('idade')
 plt.ylabel('frequencia amostral')
 plt.hist(Y)
 plt.savefig('result_images/hist_ages.png')
+
+n_X = create_dummy_vars(X, 0)
+[mins, maxes] = get_max_and_mins(n_X)
+n_X_scaled = scale_vars(n_X, mins, maxes)
+
+correlations = test_correlations(n_X_scaled, Y)
