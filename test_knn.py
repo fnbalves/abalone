@@ -21,7 +21,7 @@ for i in xrange(10):
 
 plt.xlabel('Valor de K')
 plt.ylabel('Acuracia')
-x = [x for [x,y] in accuracies]
-y = [y for [x,y] in accuracies]
+x = [a for [a,b] in accuracies]
+y = [b for [a,b] in accuracies]
 plt.plot(x,y)
 plt.show()
