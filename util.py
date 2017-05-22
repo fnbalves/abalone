@@ -6,6 +6,49 @@ def read_file():
     raw_data = pd.read_csv("data/abalone.data", sep=",", header=None)
     return raw_data.values
 
+def get_max_and_mins(X):
+    (num_elems, dimensions) = np.shape(X)
+    maxes = np.zeros((dimensions))
+    mins = np.zeros((dimensions))
+    for i in xrange(dimensions):
+        mins[i] = 100000000
+        maxes[i] = -10000000
+
+    for i in xrange(num_elems):
+        for d in xrange(dimensions):
+            if X[i][d] < mins[d]:
+                mins[d] = X[i][d]
+            if X[i][d] > maxes[d]:
+                maxes[d] = X[i][d]
+
+    return [mins, maxes]
+
+def scale_vars(X, mins, maxes):
+    (num_elems, dimensions) = np.shape(X)
+    n_X = []
+    for i in xrange(num_elems):
+        current_row = X[i]
+        scaled_row = (current_row - mins)/(maxes - mins)
+        n_X.append(scaled_row)
+    return np.array(n_X)
+
+def create_dummy_vars(X, index):
+    (num_elems, dimensions) = np.shape(X)
+    all_values = []
+    for i in xrange(num_elems):
+        all_values.append(X[i][index])
+    all_values = list(set(all_values))
+    len_all_values = len(all_values)
+    n_X = []
+    for i in xrange(num_elems):
+        dummies = np.zeros((1, len_all_values))
+        dummies[0][all_values.index(X[i][index])] = 1
+        before = X[np.ix_([i], range(0, index))]
+        after = X[np.ix_([i], range(index + 1, dimensions))]
+        new_row = np.concatenate((before, dummies, after), axis=1)[0]
+        n_X.append(new_row)
+    return np.array(n_X)
+
 def separate_X_Y(np_data):
     num_rows = np.shape(np_data)[0]
     num_colums = np.shape(np_data)[1]
