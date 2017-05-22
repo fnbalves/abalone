@@ -69,9 +69,9 @@ def pre_process_and_hold_out(X, Y):
     train = [t for t in all_data[:train_set_size]]
     test = [t for t in all_data[train_set_size:]]
 
-    X_train = [x for [x,y] in train]
-    Y_train = [y for [x,y] in train]
-    X_test = [x for [x,y] in test]
-    Y_test = [y for [x,y] in test]
+    X_train = np.array([x for [x,y] in train])
+    Y_train = np.array([y for [x,y] in train])
+    X_test = np.array([x for [x,y] in test])
+    Y_test = np.array([y for [x,y] in test])
 
     return [X_train, Y_train, X_test, Y_test]
