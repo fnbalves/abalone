@@ -75,3 +75,11 @@ def pre_process_and_hold_out(X, Y):
     Y_test = np.array([y for [x,y] in test])
 
     return [X_train, Y_train, X_test, Y_test]
+
+def mean_error(classifier, X_test, Y_test):
+    predictions = classifier.predict(X_test)
+    tam = float(np.shape(predictions)[0])
+    error = predictions - Y_test
+    error_t = np.transpose(error)
+    error_q = np.dot(error, error_t)
+    return error_q/tam
