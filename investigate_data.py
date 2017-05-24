@@ -1,6 +1,16 @@
 import matplotlib.pyplot as plt
 from util import *
 
+def custom_transform(X):
+    (num_elems, dimensions) = np.shape(X)
+    new_X = []
+    for n in xrange(num_elems):
+        x = X[n]
+        nX = np.array([x[0], x[1], x[2], x[3], x[4], x[5], np.sqrt(x[6]), np.sqrt(x[7]), np.sqrt(x[8]), np.sqrt(x[9])])
+        new_X.append(nX)
+    new_X_np = np.asarray(new_X)
+    return new_X_np
+
 def test_correlations(X, Y):
     (num_elems, dimensions) = np.shape(X)
     correlations = []
@@ -33,7 +43,21 @@ plt.hist(Y)
 plt.savefig('result_images/hist_ages.png')
 
 n_X = create_dummy_vars(X, 0)
-[mins, maxes] = get_max_and_mins(n_X)
-n_X_scaled = scale_vars(n_X, mins, maxes)
+X_t = custom_transform(n_X)
+[mins, maxes] = get_max_and_mins(X_t)
+
+n_X_scaled = scale_vars(X_t, mins, maxes)
 
 correlations = test_correlations(n_X_scaled, Y)
+
+(num_elems, dimensions) = np.shape(n_X)
+print 'Saving scatter plots'
+
+for d in xrange(dimensions):
+    print 'feature', d + 1, 'of', dimensions
+    feature = isolate_feature(n_X_scaled, d)
+    plt.gcf().clear()
+    plt.xlabel('feature ' + str(d))
+    plt.ylabel('saida')
+    plt.scatter(feature, Y)
+    plt.savefig('result_images/scatter_' + str(d) + '.png')
