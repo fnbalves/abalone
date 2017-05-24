@@ -2,6 +2,16 @@ import pandas as pd
 import numpy as np
 import random
 
+def custom_transform(X):
+    (num_elems, dimensions) = np.shape(X)
+    new_X = []
+    for n in xrange(num_elems):
+        x = X[n]
+        nX = np.array([x[0], x[1], x[2], x[3], x[4], x[5], np.sqrt(x[6]), np.sqrt(x[7]), np.sqrt(x[8]), np.sqrt(x[9])])
+        new_X.append(nX)
+    new_X_np = np.asarray(new_X)
+    return new_X_np
+
 def read_file():
     raw_data = pd.read_csv("data/abalone.data", sep=",", header=None)
     return raw_data.values
@@ -59,8 +69,10 @@ def separate_X_Y(np_data):
 
 def pre_process_and_hold_out(X, Y):
     n_X = create_dummy_vars(X, 0)
+    X_t = custom_transform(n_X)
     [mins, maxes] = get_max_and_mins(n_X)
-    n_X_scaled = scale_vars(n_X, mins, maxes)
+    maxes[5] = 0.2
+    n_X_scaled = scale_vars(X_t, mins, maxes)
 
     all_data = [[x, Y[i]] for (i, x) in enumerate(n_X_scaled)]
     random.shuffle(all_data)
@@ -83,3 +95,8 @@ def mean_error(classifier, X_test, Y_test):
     error_t = np.transpose(error)
     error_q = np.dot(error, error_t)
     return error_q/tam
+
+def isolate_feature(X, index):
+    (num_elems, dimensions) = np.shape(X)
+    feature = X[np.ix_(range(num_elems), [index])]
+    return feature
