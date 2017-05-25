@@ -12,6 +12,15 @@ def custom_transform(X):
     new_X_np = np.asarray(new_X)
     return new_X_np
 
+
+def separate_intervals(Y):
+    dimensions = np.shape(Y)[0]
+    new_Y = []
+    for d in xrange(dimensions):
+        nY = int(Y[d])/5
+        new_Y.append(nY)
+    return np.array(new_Y).ravel()
+
 def read_file():
     raw_data = pd.read_csv("data/abalone.data", sep=",", header=None)
     return raw_data.values
@@ -67,13 +76,14 @@ def separate_X_Y(np_data):
     Y = Y.ravel()
     return [X, Y]
 
-def pre_process_and_hold_out(X, Y):
+def pre_process_and_hold_out(X, Y_o):
     n_X = create_dummy_vars(X, 0)
     X_t = custom_transform(n_X)
     [mins, maxes] = get_max_and_mins(n_X)
     maxes[5] = 0.2
     n_X_scaled = scale_vars(X_t, mins, maxes)
-
+    Y = separate_intervals(Y_o)
+    
     all_data = [[x, Y[i]] for (i, x) in enumerate(n_X_scaled)]
     random.shuffle(all_data)
     len_data_set = len(all_data)

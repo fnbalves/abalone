@@ -12,12 +12,9 @@ print 'Separate X and Y'
 [X, Y] = separate_X_Y(np_data)
 print 'Getting set of outputs'
 
-#pca = decomposition.PCA(n_components=5)
-
 [X_train, Y_train, X_test, Y_test] = pre_process_and_hold_out(X, Y)
-#pca.fit(X_train)
-n_X_train = X_train #pca.transform(X_train)
-n_X_test = X_test #pca.transform(X_test)
+n_X_train = X_train
+n_X_test = X_test
 
 errors = []
 predictions = []
@@ -25,7 +22,7 @@ best_error = 10000
 for i in xrange(20):
     c = i + 1
     print i
-    mlp_classifier = MLPRegressor((c), activation='relu', solver='lbfgs', learning_rate='constant')
+    mlp_classifier = MLPClassifier((c), activation='relu', solver='lbfgs', learning_rate='constant')
     mlp_classifier.fit(n_X_train, Y_train)
     new_error = np.sqrt(mean_error(mlp_classifier, n_X_test, Y_test))
     print 'Mean error', new_error
@@ -41,7 +38,7 @@ for i in xrange(20):
 #plt.plot(x,y)
 #plt.show()
 
-#plt.xlabel('Valores do MLP')
-#plt.ylabel('Valores originais')
-#plt.scatter(predictions, Y_test)
-#plt.show()
+plt.xlabel('Valores do MLP')
+plt.ylabel('Valores originais')
+plt.scatter(predictions, Y_test)
+plt.show()
