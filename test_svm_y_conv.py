@@ -38,7 +38,7 @@ for i in xrange(200):
     scores_3.append(new_score_3)
 
 plt.xlabel('Valor de C')
-plt.ylabel('Raiz do erro medio')
+plt.ylabel('F1-score')
 no_transf, = plt.plot(Ks, scores_1, 'b', label='sem transformacao')
 equal_length, = plt.plot(Ks, scores_2, 'r', label='tamanhos iguais')
 equal_frequency, = plt.plot(Ks, scores_3, 'g', label='frequencias iguais')
