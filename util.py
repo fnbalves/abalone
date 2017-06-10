@@ -1,13 +1,17 @@
 import pandas as pd
 import numpy as np
 import random
+from random_tansformations import *
+
+featureset = load_features('fatures.pickle')
 
 def custom_transform(X):
     (num_elems, dimensions) = np.shape(X)
     new_X = []
     for n in xrange(num_elems):
         x = X[n]
-        nX =  np.array([x[0], x[1], x[2], x[3], x[4], x[5], pow(x[6], 0.02), pow(x[7], 0.02), pow(x[8], 0.02), pow(x[9], 0.02)])
+        #nX =  np.array([x[0], x[1], x[2], x[3], x[4], x[5], pow(x[6], 0.02), pow(x[7], 0.02), pow(x[8], 0.02), pow(x[9], 0.02)])
+        nX =  np.array([x[0]/(x[6] + 1), x[1]/(x[6] + 1), x[2]/(x[6] + 1), x[3]/(x[6] + 1), x[4]/(x[6] + 1), x[5]/(x[6] + 1), x[6]/(x[7] + 1), x[7]/(x[6] + 1), x[8]/(x[6] + 1), x[9]/(x[6] + 1)])
         new_X.append(nX)
     new_X_np = np.asarray(new_X)
     return new_X_np
@@ -104,9 +108,9 @@ def pre_process_and_hold_out(X, Y):
 
     return [X_train, Y_train_1, Y_train_2, Y_train_3, X_test, Y_test_1, Y_test_2, Y_test_3]
 
-def test_custon_transformation(X, Y):
+def test_custom_transformation(X, Y):
     n_X = create_dummy_vars(X, 0)
-    X_t = custom_transform(n_X)
+    X_t = apply_features(n_X, featureset)#custom_transform(n_X)
     [mins_1, maxes_1] = get_max_and_mins(n_X)
     [mins_2, maxes_2] = get_max_and_mins(X_t)
     X_scaled_1 = scale_vars(n_X, mins_1, maxes_1)
