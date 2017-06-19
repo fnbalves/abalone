@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPClassifier
 
 class MLP(object):
-    def __init__(self, hidden_layers_sizes, lambda_reg=1, learning_rate=0.0001, power_T=0.5, max_fail=10, min_increment=0.000000001, max_iter=500):
+    def __init__(self, hidden_layers_sizes, lambda_reg=0.0001, activation='tanh', learning_rate=0.1, power_T=1, max_fail=10, min_increment=0.000000001, max_iter=500):
         self.hidden_layers_sizes = hidden_layers_sizes
         self.lambda_reg = lambda_reg
         self.power_T = power_T
@@ -13,32 +13,79 @@ class MLP(object):
         self.min_increment = min_increment
         self.max_iter = max_iter
         self.cost_evolution = []
+        self.activation = activation
+
+    def get_Y_set(self, Y):
+        Y_set = []
+        for y in Y:
+            y_l = y.tolist()
+            if y_l not in Y_set:
+                Y_set.append(y_l)
+        return Y_set
 
     def create_matrices(self, n_in, n_out):
         self.W = []
         num_hidden_layers = len(self.hidden_layers_sizes)
         initial_size = n_in + 1
         for i in xrange(num_hidden_layers):
-            new_W = np.random.randn(initial_size, self.hidden_layers_sizes[i])
+            new_W = 0.5*np.random.randn(initial_size, self.hidden_layers_sizes[i])
             initial_size = self.hidden_layers_sizes[i] + 1
             self.W.append(new_W)
-        final_W = np.random.randn(initial_size, n_out)
+        final_W = 0.5*np.random.randn(initial_size, n_out)
         self.W.append(final_W)
 
     def fit(self, X, Y):
         (num_elems, n_ins) = np.shape(X)
-
-        self.X_train = X
-        self.Y_train = Y
+        self.available_labels = self.get_Y_set(Y)
+        self.Y_train = self.convert_to_dummy(Y)
         
-        shape_Y = np.shape(Y)
+        self.X_train = X
+        
+        shape_Y = np.shape(self.Y_train)
         if len(shape_Y) == 1:
             n_out = 1
         else:
             n_out = shape_Y[1]
-            
+
         self.create_matrices(n_ins, n_out)
+
+    def convert_to_dummy(self, Y):
+        Y_dummy = []
+        size_dummy = len(self.available_labels)
+        
+        for y in Y:
+            y_l = y.tolist()
+            new_Y = [0]*size_dummy
+            ind = self.available_labels.index(y_l)
+            new_Y[ind] = 1
+            Y_dummy.append(new_Y)
             
+        return np.array(Y_dummy)
+
+    def act(self, X):
+        if self.activation == 'relu':
+            return self.relu(X)
+        elif self.activation == 'tanh':
+            return self.tanh(X)
+        elif self.activation == 'identity':
+            return self.identity(X)
+        elif self.activation == 'sigmoid':
+            return self.sigmoid(X)
+        else:
+            raise ValueError('Unknown activation ' + self.activation)
+
+    def der_act(self, X):
+        if self.activation == 'relu':
+            return self.der_relu(X)
+        elif self.activation == 'tanh':
+            return self.der_tanh(X)
+        elif self.activation == 'identity':
+            return self.der_identity(X)
+        elif self.activation == 'sigmoid':
+            return self.der_sigmoid(X)
+        else:
+            raise ValueError('Unknown activation ' + self.activation)
+
     def relu(self, X):
         n_X = []
         (num_elems, dims) = np.shape(X)
@@ -48,6 +95,16 @@ class MLP(object):
                 new_line.append(max(X[i,j], 0))
             n_X.append(new_line)
         return np.asarray(n_X)
+
+    def tanh(self, X):
+        return np.tanh(X)
+
+    def identity(self, X):
+        return X
+
+    def sigmoid(self, X):
+        np_X = np.array(X)
+        return 1/(1 + np.exp((-1)*np_X))
 
     def der_relu(self, X):
         n_X = []
@@ -62,6 +119,17 @@ class MLP(object):
             n_X.append(new_line)
         return np.asarray(n_X)
 
+    def der_tanh(self, X):
+        t = self.tanh(X)
+        return 1 - t**2
+
+    def der_identity(self, X):
+        return np.ones(np.shape(X))
+
+    def der_sigmoid(self, X):
+        sig = self.sigmoid(X)
+        return np.multiply(sig, 1 - sig)
+    
     def forward_with_test_W(self, X, W):
         shape_X = np.shape(X)
         if len(shape_X) == 1:
@@ -77,7 +145,7 @@ class MLP(object):
             act_with_bias = np.append(bias, current_act, axis=1)
             activations.append((before_activation, act_with_bias))
             before_activation = np.dot(act_with_bias, W[i])
-            current_act = self.relu(before_activation)
+            current_act = self.act(before_activation)
         return {'output' : current_act, 'activations' : activations, 'output_before' : before_activation}
 
     def forward(self, X):
@@ -135,8 +203,22 @@ class MLP(object):
         return Num_Deltas
     
     def predict(self, X):
-        return self.forward(X)['output']
-        
+        out_raw = self.forward(X)['output']
+        sm = self.softmax(out_raw)
+        final_output = []
+        for s in sm:
+            final_output.append(self.available_labels[s])
+        return final_output
+
+    def softmax(self, Y):
+        new_Y = []
+        for y in Y:
+            exp_y = np.exp(y)
+            sum_y = np.sum(exp_y)
+            sm = exp_y/sum_y
+            new_Y.append(np.argmax(sm))
+        return new_Y
+    
     def backprop(self):
         Big_deltas = []
         num_layers = len(self.W)
@@ -152,7 +234,7 @@ class MLP(object):
             forw = self.forward(x)
             pred = forw['output']
             pred_before = forw['output_before']
-            pred_der = np.transpose(self.der_relu(pred_before))
+            pred_der = np.transpose(self.der_act(pred_before))
             activations = forw['activations']
 
             final_delta = np.multiply(np.transpose(pred - y), pred_der)
@@ -165,7 +247,7 @@ class MLP(object):
 
                 Big_deltas[num_layers - j - 1] += np.dot(np.transpose(curr_act_with_bias), np.transpose(last_delta))
 
-                der = np.transpose(self.der_relu(curr_out))
+                der = np.transpose(self.der_act(curr_out))
                 small_W = self.W[num_layers - j -1][1:, :]
                 
                 new_delta = np.multiply(np.dot(small_W, last_delta), der)
@@ -198,6 +280,7 @@ class MLP(object):
         has_exited_early = False
         
         for i in xrange(self.max_iter):
+            print i
             self.one_step_grad_desc()
             next_cost = self.cost()
             self.cost_evolution.append(next_cost)
@@ -218,12 +301,10 @@ class MLP(object):
         if not has_exited_early:
             print 'Exited gradient descend by max iterations'
 
-#X = np.array([[0,0], [0,1], [1,1], [1,0]]*100 + 100*[[1,1]], dtype=np.float32)
-#Y = np.array([0,0,1,0]*100 + [1]*100, dtype=np.float32)
-X = np.array([[1,2,3],[3,2,1]], dtype=np.float32)
-Y = np.array([[1,2], [2,1]], dtype=np.float32)
-#mlp = MLPClassifier((3,), activation='relu', solver='lbfgs', learning_rate='invscaling')
-#mlp.fit(X, Y)
-m = MLP((3,), power_T=1, lambda_reg=0)
+X = np.array([[0,0], [0,1], [1,1], [1,0]], dtype=np.float32)
+Y = np.array([0,1,0,1], dtype=np.float32)
+mlp = MLPClassifier((3,), activation='relu', solver='lbfgs', learning_rate='invscaling', momentum=0.9)
+mlp.fit(X, Y)
+m = MLP((3,), power_T=1, activation='tanh', learning_rate=0.1)
 m.fit(X, Y)
-#m.gradient_descend()
+m.gradient_descend()
