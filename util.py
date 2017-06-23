@@ -81,7 +81,6 @@ def separate_X_Y(np_data):
     return [X, Y]
 
 def pre_process_and_hold_out(X, Y):
-    #X_t = custom_transform(n_X)
     n_X = create_dummy_vars(X, 0)
     [mins, maxes] = get_max_and_mins(n_X)
     n_X_scaled = scale_vars(n_X, mins, maxes)
@@ -92,25 +91,17 @@ def pre_process_and_hold_out(X, Y):
         
     all_data = [[x, Y[i], Y_es[i], Y_ef[i]] for (i, x) in enumerate(n_X_scaled)]
     random.shuffle(all_data)
-    len_data_set = len(all_data)
-    train_set_size = 2*len_data_set/3
-    train = [t for t in all_data[:train_set_size]]
-    test = [t for t in all_data[train_set_size:]]
 
-    X_train = np.array([x for [x,y1, y2, y3] in train])
-    Y_train_1 = np.array([y1 for [x,y1, y2, y3] in train])
-    Y_train_2 = np.array([y2 for [x,y1, y2, y3] in train])
-    Y_train_3 = np.array([y3 for [x,y1, y2, y3] in train])
-    X_test = np.array([x for [x,y1, y2, y3] in test])
-    Y_test_1 = np.array([y1 for [x,y1, y2, y3] in test])
-    Y_test_2 = np.array([y2 for [x,y1, y2, y3] in test])
-    Y_test_3 = np.array([y3 for [x,y1, y2, y3] in test])
-
-    return [X_train, Y_train_1, Y_train_2, Y_train_3, X_test, Y_test_1, Y_test_2, Y_test_3]
+    X_final = np.array([x for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_no_transform = np.array([y1 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_equal_size = np.array([y2 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_equal_frequency = np.array([y3 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    
+    return [X_final, Y_no_transform, Y_equal_size, Y_equal_frequency]
 
 def test_custom_transformation(X, Y):
     n_X = create_dummy_vars(X, 0)
-    X_t = apply_features(n_X, featureset)#custom_transform(n_X)
+    X_t = apply_features(n_X, featureset)
     [mins_1, maxes_1] = get_max_and_mins(n_X)
     [mins_2, maxes_2] = get_max_and_mins(X_t)
     X_scaled_1 = scale_vars(n_X, mins_1, maxes_1)
@@ -133,6 +124,7 @@ def test_custom_transformation(X, Y):
     Y_test = np.array([y for [x1, x2, y] in test])
 
     return [X_train_1, X_train_2, Y_train, X_test_1, X_test_2, Y_test]
+
 def mean_error(classifier, X_test, Y_test):
     predictions = classifier.predict(X_test)
     tam = float(np.shape(predictions)[0])
