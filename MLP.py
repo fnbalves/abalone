@@ -9,7 +9,6 @@ class MLP(object):
         self.max_iter = max_iter
         self.cost_evolution = []
         self.activation = activation
-        self.last_W = []
     
     def get_Y_set(self, Y):
         Y_set = []
@@ -21,7 +20,6 @@ class MLP(object):
 
     def create_matrices(self, n_in, n_out):
         self.W = []
-        self.last_W = []
         
         num_hidden_layers = len(self.hidden_layers_sizes)
         initial_size = n_in + 1
@@ -29,7 +27,6 @@ class MLP(object):
             new_W = 0.5*np.random.randn(initial_size, self.hidden_layers_sizes[i])
             initial_size = self.hidden_layers_sizes[i] + 1
             self.W.append(new_W)
-            self.last_W.append(new_W)
         final_W = 0.5*np.random.randn(initial_size, n_out)
         self.W.append(final_W)
 
