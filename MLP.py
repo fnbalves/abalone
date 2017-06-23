@@ -1,20 +1,16 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neural_network import MLPClassifier
 
 class MLP(object):
-    def __init__(self, hidden_layers_sizes, lambda_reg=0.0001, activation='tanh', learning_rate=0.1, power_T=1, max_fail=10, min_increment=0.000000001, max_iter=500):
+    def __init__(self, hidden_layers_sizes, lambda_reg=0.0001, activation='sigmoid', learning_rate=0.1, min_increment=0.000000001, max_iter=500):
         self.hidden_layers_sizes = hidden_layers_sizes
         self.lambda_reg = lambda_reg
-        self.power_T = power_T
-        self.initial_learning_rate = learning_rate
         self.learning_rate = learning_rate
-        self.max_fail = max_fail
         self.min_increment = min_increment
         self.max_iter = max_iter
         self.cost_evolution = []
         self.activation = activation
-
+        self.last_W = []
+    
     def get_Y_set(self, Y):
         Y_set = []
         for y in Y:
@@ -25,12 +21,15 @@ class MLP(object):
 
     def create_matrices(self, n_in, n_out):
         self.W = []
+        self.last_W = []
+        
         num_hidden_layers = len(self.hidden_layers_sizes)
         initial_size = n_in + 1
         for i in xrange(num_hidden_layers):
             new_W = 0.5*np.random.randn(initial_size, self.hidden_layers_sizes[i])
             initial_size = self.hidden_layers_sizes[i] + 1
             self.W.append(new_W)
+            self.last_W.append(new_W)
         final_W = 0.5*np.random.randn(initial_size, n_out)
         self.W.append(final_W)
 
@@ -48,6 +47,7 @@ class MLP(object):
             n_out = shape_Y[1]
 
         self.create_matrices(n_ins, n_out)
+        self.gradient_descend()
 
     def convert_to_dummy(self, Y):
         Y_dummy = []
@@ -155,13 +155,13 @@ class MLP(object):
         (m, d) = np.shape(self.X_train)
         m = float(m)
         Y_pred = np.reshape(self.forward_with_test_W(self.X_train, W)['output'], np.shape(self.Y_train))
-        first_term = np.sum((self.Y_train - Y_pred)**2)
+        first_term = (-1)*np.sum(np.multiply(self.Y_train, np.log(Y_pred)) + np.multiply(1 - self.Y_train, np.log(1 - Y_pred)))#np.sum((self.Y_train - Y_pred)**2)
         reg_term = 0
         num_layers = len(W)
         for i in xrange(num_layers):
             reg_term += np.sum(W[i]**2)
         
-        cost_val = (1.0/(2.0*m))*(first_term) + (self.lambda_reg/(2.0*m))*reg_term
+        cost_val = (1.0/(1.0*m))*(first_term) + (self.lambda_reg/(2.0*m))*reg_term #1/2m
         return cost_val
 
     def cost(self):
@@ -234,7 +234,7 @@ class MLP(object):
             forw = self.forward(x)
             pred = forw['output']
             pred_before = forw['output_before']
-            pred_der = np.transpose(self.der_act(pred_before))
+            pred_der = np.ones(np.shape(np.transpose(self.der_act(pred_before))))
             activations = forw['activations']
 
             final_delta = np.multiply(np.transpose(pred - y), pred_der)
@@ -269,12 +269,21 @@ class MLP(object):
         num_layers = len(self.W)
         for i in xrange(num_layers):
             self.W[i] -= self.learning_rate*Deltas[i]
-        self.learning_rate*=self.power_T
+            
 
+    def make_W_with_sklearn_data(self, coefs_, intercepts_, classes_):
+        num_matrices = len(coefs_)
+        self.W = []
+        for i in xrange(num_matrices):
+            new_W = np.vstack((intercepts_[i], coefs_[i]))
+            self.W.append(new_W)
+        self.available_labels = classes_.tolist()
+
+    def copy_sklearn(self, mlp):
+        self.make_W_with_sklearn_data(mlp.coefs_, mlp.intercepts_, mlp.classes_)
+        
     def gradient_descend(self):
         last_cost = self.cost()
-        self.learning_rate = self.initial_learning_rate
-        num_failure = 0
         self.cost_evolution = [last_cost]
 
         has_exited_early = False
@@ -286,13 +295,7 @@ class MLP(object):
             self.cost_evolution.append(next_cost)
             
             cost_update = next_cost - last_cost
-            if cost_update > 0:
-                num_failure += 1
-                if num_failure > self.max_fail:
-                    print 'Exited gradient descend by max_failure'
-                    has_exited_early = True
-                    break
-
+            
             if abs(cost_update) < self.min_increment:
                 has_exited_early = True
                 print 'Exited gradient descend by min increment'
@@ -300,11 +303,3 @@ class MLP(object):
             last_cost = next_cost
         if not has_exited_early:
             print 'Exited gradient descend by max iterations'
-
-X = np.array([[0,0], [0,1], [1,1], [1,0]], dtype=np.float32)
-Y = np.array([0,1,0,1], dtype=np.float32)
-mlp = MLPClassifier((3,), activation='relu', solver='lbfgs', learning_rate='invscaling', momentum=0.9)
-mlp.fit(X, Y)
-m = MLP((3,), power_T=1, activation='tanh', learning_rate=0.1)
-m.fit(X, Y)
-m.gradient_descend()
