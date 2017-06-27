@@ -17,6 +17,10 @@ def custom_transform(X):
     return new_X_np
 
 
+def remove_outliers_from_5(X):
+    for x in X:
+        x[5] = min(0.25, x[5])
+
 def separate_intervals(Y):
     dimensions = np.shape(Y)[0]
     new_Y = []
@@ -80,13 +84,33 @@ def separate_X_Y(np_data):
     Y = Y.ravel()
     return [X, Y]
 
-def pre_process_and_hold_out(X, Y):
+def pre_process(X, Y):
     n_X = create_dummy_vars(X, 0)
+    remove_outliers_from_5(n_X)
     [mins, maxes] = get_max_and_mins(n_X)
     n_X_scaled = scale_vars(n_X, mins, maxes)
 
     Y_es = convert_Y_equal_size(Y)
     Y_ef = convert_Y_equal_frequency(Y)
+    
+        
+    all_data = [[x, Y[i], Y_es[i], Y_ef[i]] for (i, x) in enumerate(n_X_scaled)]
+    random.shuffle(all_data)
+
+    X_final = np.array([x for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_no_transform = np.array([y1 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_equal_size = np.array([y2 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    Y_equal_frequency = np.array([y3 for [x, y1, y2, y3] in all_data], dtype=np.float32)
+    
+    return [X_final, Y_no_transform, Y_equal_size, Y_equal_frequency]
+
+def pd_pre_process_and_hold_out(X, Y, num_bins):
+    n_X = create_dummy_vars(X, 0)
+    [mins, maxes] = get_max_and_mins(n_X)
+    n_X_scaled = scale_vars(n_X, mins, maxes)
+
+    Y_es = pd_equal_size(Y, num_bins)
+    Y_ef = pd_equal_frequency(Y, num_bins)
     
         
     all_data = [[x, Y[i], Y_es[i], Y_ef[i]] for (i, x) in enumerate(n_X_scaled)]
@@ -107,23 +131,9 @@ def test_custom_transformation(X, Y):
     X_scaled_1 = scale_vars(n_X, mins_1, maxes_1)
     X_scaled_2 = scale_vars(X_t, mins_2, maxes_2)
 
-    Y_es = convert_Y_equal_size(Y)
+    Y_es = convert_Y_equal_frequency(Y)
 
-    all_data = [[X_scaled_1[i], X_scaled_2[i], y] for (i, y) in enumerate(Y_es)]
-    random.shuffle(all_data)
-    len_data_set = len(all_data)
-    train_set_size = 2*len_data_set/3
-    train = [t for t in all_data[:train_set_size]]
-    test = [t for t in all_data[train_set_size:]]
-
-    X_train_1 = np.array([x1 for [x1, x2, y] in train])
-    X_train_2 = np.array([x2 for [x1, x2, y] in train])
-    Y_train = np.array([y for [x1, x2, y] in train])
-    X_test_1 = np.array([x1 for [x1, x2, y] in test])
-    X_test_2 = np.array([x2 for [x1, x2, y] in test])
-    Y_test = np.array([y for [x1, x2, y] in test])
-
-    return [X_train_1, X_train_2, Y_train, X_test_1, X_test_2, Y_test]
+    return [X_scaled_1, X_scaled_2,  Y_es]
 
 def mean_error(classifier, X_test, Y_test):
     predictions = classifier.predict(X_test)
@@ -159,3 +169,9 @@ def convert_Y_equal_frequency(Y):
         else:
             n_Y.append(2)
     return np.array(n_Y).ravel()
+
+def pd_equal_size(Y, num_bins):
+    return pd.cut(Y, num_bins, retbins=False, labels=range(num_bins))
+
+def pd_equal_frequency(Y, num_bins):
+    return pd.qcut(Y, num_bins, retbins=False, labels=range(num_bins))

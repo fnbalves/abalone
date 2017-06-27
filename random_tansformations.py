@@ -4,9 +4,9 @@ import pickle
 import numpy as np
 
 def create_random_feature():
-    index_1 = 3 + floor(random.random()*7)
-    index_2 = 3 + floor(random.random()*7)
-    coef_1 = random.gauss(0,1)
+    index_1 = 3 + floor(random.random()*7) 
+    index_2 = 3 + floor(random.random()*7) 
+    coef_1 = random.gauss(0,1) 
     coef_2 = random.gauss(0,1)
     
     return [index_1, index_2, coef_1, coef_2]

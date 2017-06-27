@@ -9,7 +9,8 @@ class MLP(object):
         self.max_iter = max_iter
         self.cost_evolution = []
         self.activation = activation
-    
+        self.gradients = []
+        
     def get_Y_set(self, Y):
         Y_set = []
         for y in Y:
@@ -148,17 +149,20 @@ class MLP(object):
     def forward(self, X):
         return self.forward_with_test_W(X, self.W)
 
+    def diff_matrices(self, W1, W2):
+        return np.sum((W1 - W2)**2)
+    
     def cost_with_test_W(self, W):
         (m, d) = np.shape(self.X_train)
         m = float(m)
         Y_pred = np.reshape(self.forward_with_test_W(self.X_train, W)['output'], np.shape(self.Y_train))
-        first_term = (-1)*np.sum(np.multiply(self.Y_train, np.log(Y_pred)) + np.multiply(1 - self.Y_train, np.log(1 - Y_pred)))#np.sum((self.Y_train - Y_pred)**2)
+        first_term = (-1)*np.sum(np.multiply(self.Y_train, np.log(Y_pred)) + np.multiply(1 - self.Y_train, np.log(1 - Y_pred)))
         reg_term = 0
         num_layers = len(W)
         for i in xrange(num_layers):
             reg_term += np.sum(W[i]**2)
         
-        cost_val = (1.0/(1.0*m))*(first_term) + (self.lambda_reg/(2.0*m))*reg_term #1/2m
+        cost_val = (1.0/(1.0*m))*(first_term) + (self.lambda_reg/(2.0*m))*reg_term
         return cost_val
 
     def cost(self):
@@ -263,6 +267,10 @@ class MLP(object):
 
     def one_step_grad_desc(self):
         Deltas = self.backprop()
+        Deltas_num = self.numeric_gradients()
+
+        self.gradients.append([Deltas, Deltas_num])
+        
         num_layers = len(self.W)
         for i in xrange(num_layers):
             self.W[i] -= self.learning_rate*Deltas[i]
@@ -282,7 +290,8 @@ class MLP(object):
     def gradient_descend(self):
         last_cost = self.cost()
         self.cost_evolution = [last_cost]
-
+        self.gradients = []
+        
         has_exited_early = False
         
         for i in xrange(self.max_iter):
@@ -300,3 +309,13 @@ class MLP(object):
             last_cost = next_cost
         if not has_exited_early:
             print 'Exited gradient descend by max iterations'
+
+        diffs = []
+        for g in self.gradients:
+            back = g[0]
+            num = g[1]
+            for i, m in enumerate(back):
+                new_diff = self.diff_matrices(m, num[i])
+                diffs.append(new_diff)
+        print 'Differeces', diffs
+        print 'mean difference', np.mean(diffs)

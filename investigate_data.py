@@ -1,5 +1,12 @@
 import matplotlib.pyplot as plt
 from util import *
+from math import cos
+import numpy as np
+from random_tansformations import *
+
+featureset = load_features('fatures.pickle')
+
+remove_outliers = False
 
 print 'Reading files'
 np_data = read_file()
@@ -23,17 +30,29 @@ plt.hist(Y)
 plt.savefig('result_images/hist_ages.png')
 
 n_X = create_dummy_vars(X, 0)
+
+print 'Find outliers'
+X_list = n_X.tolist()
+sorted_X = sorted(X_list, reverse=True, key=lambda x:x[5])
+print 'first outlier', sorted_X[0][5]
+print 'second outlier', sorted_X[1][5]
+print 'normal one', sorted_X[2][5]
+
+if remove_outliers:
+    remove_outliers_from_5(n_X)
 [mins, maxes] = get_max_and_mins(n_X)
 n_X_scaled = scale_vars(n_X, mins, maxes)
+
 print 'Saving scatter plots'
 
 (num_elems, dimensions) = np.shape(n_X)
 
+names_features = ['dummy sexo M', 'dummy sexo F', 'dummy sexo I', 'comprimento', 'diametro', 'altura', 'peso inteiro', 'peso sugado', 'peso das visceras', 'peso da concha'] 
 for d in xrange(dimensions):
     print 'feature', d + 1, 'of', dimensions
     feature = isolate_feature(n_X_scaled, d)
     plt.gcf().clear()
-    plt.xlabel('feature ' + str(d))
-    plt.ylabel('saida')
+    plt.xlabel(names_features[d])
+    plt.ylabel('idade (numero de aneis)')
     plt.scatter(feature, Y)
     plt.savefig('result_images/scatter_' + str(d) + '.png')
